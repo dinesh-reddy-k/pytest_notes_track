@@ -1,0 +1,20 @@
+<nav class="bg-blue-600 p-4 text-white">
+  <div class="container mx-auto flex justify-between items-center">
+    <a href="{% url 'note_list' %}" class="text-2xl font-bold">Sistema de Notas</a>
+    <div>
+      {% if user.is_authenticated %}
+      <span class="mr-4">Olá, {{ user.username }}</span>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Sair
+        </button>
+      </form>
+      {% else %}
+      <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Entrar
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
