@@ -1,18 +1,18 @@
-<nav class="bg-blue-600 p-4 text-white">
-  <div class="container mx-auto flex justify-between items-center">
-    <a href="{% url 'note_list' %}" class="text-2xl font-bold">Sistema de Notas</a>
+<nav class="bg-violet-800 p-4 text-white">
+  <div class="container mx-auto flex lg:justify-between md:justify-between items-center lg:gap-0 md:gap-2 gap-16">
+    <a href="{% url 'note_list' %}" class="text-2xl font-bold">Notes Tracker</a>
     <div>
       {% if user.is_authenticated %}
-      <span class="mr-4">Olá, {{ user.username }}</span>
+      <span class="mr-4">hello, {{ user.username }}</span>
       <form method="post" action="{% url 'logout' %}" style="display:inline;">
         {% csrf_token %}
-        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Sair
+        <button type="submit" class="bg-violet-400 hover:bg-violet-500 text-white font-bold p-2 rounded">
+          Logout
         </button>
       </form>
       {% else %}
-      <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        Entrar
+      <a href="{% url 'login' %}" class="bg-violet-400 hover:bg-violet-500 text-white font-bold p-2 rounded">
+        Login
       </a>
       {% endif %}
     </div>

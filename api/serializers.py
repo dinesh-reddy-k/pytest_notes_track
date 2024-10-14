@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from core.models import Note, Category
 from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -23,10 +25,10 @@ class NoteSerializer(serializers.ModelSerializer):
     """
 
     owner = serializers.StringRelatedField(read_only=True)
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), required=False, allow_null=True
+    categories = CategorySerializer(many=True, read_only=True)
+    category_names = serializers.ListField(
+        child=serializers.CharField(), write_only=True, required=False
     )
-    category_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Note
@@ -37,27 +39,108 @@ class NoteSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "owner",
-            "category",
-            "category_name",
+            "categories",
+            "category_names",
         ]
 
-    def get_category_name(self, obj):
-        """Retorna o nome da categoria, se existir."""
-        return obj.category.name if obj.category else None
-
-    def to_representation(self, instance):
+    def validate_category_data(self, value):
         """
-        Personaliza a representação da nota, substituindo o ID da categoria
-        pelo nome da categoria na resposta JSON.
+        Valida se cada item em category_data é uma string ou um inteiro.
         """
-        representation = super().to_representation(instance)
-        representation["category"] = representation.pop("category_name")
-        return representation
+        if not all(isinstance(item, (str, int)) for item in value):
+            raise serializers.ValidationError(
+                "Each category must be either a string (name) or an integer (ID)."
+            )
+        return value
 
     def create(self, validated_data):
         """
-        Sobrescreve o método create para definir o proprietário da nota
-        como o usuário atual da requisição.
+        Cria uma nova nota com as categorias associadas.
         """
+        # Extrai os dados de categoria do validated_data
+        category_data = validated_data.pop("category_data", [])
+        # Define o proprietário como o usuário atual
         validated_data["owner"] = self.context["request"].user
-        return super().create(validated_data)
+
+        # Usa uma transação para garantir a integridade dos dados
+        with transaction.atomic():
+            # Cria a nota
+            note = Note.objects.create(**validated_data)
+            # Associa as categorias à nota
+            self._set_categories(note, category_data)
+
+        return note
+
+    def update(self, instance, validated_data):
+        """
+        Atualiza uma nota existente, incluindo suas categorias se fornecidas.
+        """
+        # Extrai os dados de categoria do validated_data
+        category_data = validated_data.pop("category_data", None)
+        # Atualiza os outros campos da nota
+        instance = super().update(instance, validated_data)
+
+        # Se foram fornecidos dados de categoria, atualiza as categorias
+        if category_data is not None:
+            with transaction.atomic():
+                self._set_categories(instance, category_data)
+
+        return instance
+
+    def _set_categories(self, note, category_data):
+        """
+        Associa categorias a uma nota, criando novas se necessário.
+        """
+        categories = []
+        for item in category_data:
+            if isinstance(item, int):
+                # Se o item é um ID, tenta obter a categoria existente
+                try:
+                    category = Category.objects.get(id=item)
+                    categories.append(category)
+                except Category.DoesNotExist:
+                    raise ValidationError(f"Category with id {item} does not exist.")
+            else:
+                # Se o item é uma string, normaliza o nome e obtém ou cria a categoria
+                normalized_name = self._normalize_category_name(item)
+                category, created = Category.objects.get_or_create(name=normalized_name)
+                categories.append(category)
+
+        # Define as categorias da nota
+        note.categories.set(categories)
+
+    def _normalize_category_name(self, name):
+        """
+        Normaliza o nome da categoria: converte para minúsculas e remove espaços extras.
+        """
+        return " ".join(name.lower().split())
+
+    @transaction.atomic
+    def _optimize_category_query(self, category_data):
+        """
+        Otimiza a criação e recuperação de categorias em lote.
+        """
+        # Converte todos os nomes para a forma normalizada
+        normalized_names = [
+            self._normalize_category_name(item)
+            for item in category_data
+            if isinstance(item, str)
+        ]
+
+        # Busca todas as categorias existentes em uma única consulta
+        existing_categories = {
+            cat.name: cat for cat in Category.objects.filter(name__in=normalized_names)
+        }
+
+        # Cria quaisquer categorias ausentes em lote
+        new_categories = [
+            Category(name=name)
+            for name in normalized_names
+            if name not in existing_categories
+        ]
+        Category.objects.bulk_create(new_categories)
+
+        # Combina categorias existentes e novas
+        all_categories = list(existing_categories.values()) + new_categories
+
+        return all_categories
