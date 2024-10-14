@@ -13,31 +13,35 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
     def note_count(self, obj):
-        return obj.note_set.count()
+        return obj.notes.count()  # Aqui foi feita a correção, usando o 'related_name'
 
     note_count.short_description = "Número de Notas"
 
 
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
-    list_display = ("title", "category_link", "owner_link", "created_at", "updated_at")
-    list_filter = ("category", "owner", "created_at")
-    search_fields = ("title", "content", "category__name", "owner__username")
+    list_display = (
+        "title",
+        "categories_list",
+        "owner_link",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("categories", "owner", "created_at")
+    search_fields = ("title", "content", "categories__name", "owner__username")
     readonly_fields = ("created_at", "updated_at")
     actions = ["duplicate_note"]
 
     fieldsets = (
-        (None, {"fields": ("title", "content", "category", "owner")}),
+        (None, {"fields": ("title", "content", "categories", "owner")}),
         ("Datas", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
-    def category_link(self, obj):
-        if obj.category:
-            url = reverse("admin:core_category_change", args=[obj.category.id])
-            return format_html('<a href="{}">{}</a>', url, obj.category.name)
-        return "-"
+    def categories_list(self, obj):
+        # Se houver várias categorias, exibe a lista separada por vírgulas
+        return ", ".join([category.name for category in obj.categories.all()])
 
-    category_link.short_description = "Categoria"
+    categories_list.short_description = "Categorias"
 
     def owner_link(self, obj):
         url = reverse("admin:auth_user_change", args=[obj.owner.id])
