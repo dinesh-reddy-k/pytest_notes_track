@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-md mx-auto lg:my-36 bg-white rounded-lg shadow-md overflow-hidden">
   <div class="p-6">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+    <h2 class="text-2xl font-bold mb-6 text-center">Authentication System </h2>
     <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <div class="mb-4">
@@ -21,7 +21,7 @@
       <div class="flex items-center justify-between">
         <button type="submit"
           class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-          Entrar
+          Access
         </button>
       </div>
     </form>
