@@ -58,7 +58,7 @@ class NoteSerializer(serializers.ModelSerializer):
         Cria uma nova nota com as categorias associadas.
         """
         # Extrai os dados de categoria do validated_data
-        category_data = validated_data.pop("category_data", [])
+        category_names = validated_data.pop("category_names", [])
         # Define o proprietário como o usuário atual
         validated_data["owner"] = self.context["request"].user
 
@@ -67,7 +67,7 @@ class NoteSerializer(serializers.ModelSerializer):
             # Cria a nota
             note = Note.objects.create(**validated_data)
             # Associa as categorias à nota
-            self._set_categories(note, category_data)
+            self._set_categories(note, category_names)
 
         return note
 
@@ -76,30 +76,30 @@ class NoteSerializer(serializers.ModelSerializer):
         Atualiza uma nota existente, incluindo suas categorias se fornecidas.
         """
         # Extrai os dados de categoria do validated_data
-        category_data = validated_data.pop("category_data", None)
+        category_names = validated_data.pop("category_names", None)
         # Atualiza os outros campos da nota
         instance = super().update(instance, validated_data)
 
         # Se foram fornecidos dados de categoria, atualiza as categorias
-        if category_data is not None:
-            with transaction.atomic():
-                self._set_categories(instance, category_data)
-
+        if category_names is not None:
+            self._set_categories(instance, category_names)
         return instance
 
-    def _set_categories(self, note, category_data):
+    def _set_categories(self, note, category_names):
         """
         Associa categorias a uma nota, criando novas se necessário.
         """
         categories = []
-        for item in category_data:
+        for item in category_names:
             if isinstance(item, int):
                 # Se o item é um ID, tenta obter a categoria existente
                 try:
                     category = Category.objects.get(id=item)
                     categories.append(category)
                 except Category.DoesNotExist:
-                    raise ValidationError(f"Category with id {item} does not exist.")
+                    raise serializers.ValidationError(
+                        f"Category with id {item} does not exist."
+                    )
             else:
                 # Se o item é uma string, normaliza o nome e obtém ou cria a categoria
                 normalized_name = self._normalize_category_name(item)
@@ -116,14 +116,14 @@ class NoteSerializer(serializers.ModelSerializer):
         return " ".join(name.lower().split())
 
     @transaction.atomic
-    def _optimize_category_query(self, category_data):
+    def _optimize_category_query(self, category_names):
         """
         Otimiza a criação e recuperação de categorias em lote.
         """
         # Converte todos os nomes para a forma normalizada
         normalized_names = [
             self._normalize_category_name(item)
-            for item in category_data
+            for item in category_names
             if isinstance(item, str)
         ]
 
