@@ -2,15 +2,6 @@
 
 A simple yet powerful application for managing notes and categories, built with Django and Django REST Framework. This project emphasizes best practices in API development and testing using pytest, factory-boy, and Faker.
 
-## 📖 Table of Contents
-
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Running Tests](#running-tests)
-- [Features](#features)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## 🛠️ Technologies Used
 
 - **Django**: Web framework for building robust web applications.
