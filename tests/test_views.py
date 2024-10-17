@@ -12,7 +12,7 @@ class TestNoteAPI:
         """Fixture para criar uma instância do APIClient."""
         return APIClient()
 
-    @pytest.fixture#(scope='session')
+    @pytest.fixture(scope='session')
     def user(self):
         """Fixture para criar um usuário autenticado."""
         return UserFactory()
