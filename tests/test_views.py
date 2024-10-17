@@ -16,6 +16,12 @@ class TestNoteAPI:
     def user(self):
         """Fixture para criar um usuário autenticado."""
         return UserFactory()
+    
+    @pytest.fixture(autouse=True)
+    def autotest_fixture():
+        print("Autouse fixture running")
+        assert False 
+
 
     def test_list_notes(self, api_client, user):
         """Testa o endpoint de listagem de notas."""
