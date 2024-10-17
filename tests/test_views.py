@@ -10,12 +10,17 @@ class TestNoteAPI:
     @pytest.fixture
     def api_client(self):
         """Fixture para criar uma instância do APIClient."""
-        return APIClient()
+        # return APIClient()
 
-    @pytest.fixture#(scope='session')
+    @pytest.fixture(scope='session')
     def user(self):
         """Fixture para criar um usuário autenticado."""
         return UserFactory()
+    
+    @pytest.fixture(autouse=True)
+    def autotest_fixture():
+        print("Autouse fixture running")
+
 
     def test_list_notes(self, api_client, user):
         """Testa o endpoint de listagem de notas."""
