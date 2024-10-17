@@ -12,7 +12,7 @@ class TestNoteAPI:
         """Fixture para criar uma instância do APIClient."""
         return APIClient()
 
-    @pytest.fixture
+    @pytest.fixture#(scope='session')
     def user(self):
         """Fixture para criar um usuário autenticado."""
         return UserFactory()
@@ -23,12 +23,12 @@ class TestNoteAPI:
         api_client.force_authenticate(user=user)  # Autentica o usuário
         url = reverse("note-list")  # Endpoint de listagem de notas
         response = api_client.get(url)  # Faz a requisição GET
-
         assert response.status_code == 200  # Verifica se a resposta é 200 OK
         assert (
             len(response.data) == 3
         )  # Verifica se a quantidade de notas na resposta é 3
 
+    # @pytest.mark.parametrize(api_client, user)
     def test_create_note(self, api_client, user):
         """Testa o endpoint de criação de uma nova nota."""
         api_client.force_authenticate(user=user)  # Autentica o usuário
