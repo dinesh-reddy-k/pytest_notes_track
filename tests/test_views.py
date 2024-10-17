@@ -20,7 +20,6 @@ class TestNoteAPI:
     @pytest.fixture(autouse=True)
     def autotest_fixture():
         print("Autouse fixture running")
-        assert False 
 
 
     def test_list_notes(self, api_client, user):
