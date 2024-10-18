@@ -51,7 +51,7 @@ class NoteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Each category must be either a string (name) or an integer (ID)."
             )
-        return value
+        return 
 
     def create(self, validated_data):
         """

@@ -10,6 +10,9 @@ class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
     def __str__(self):
+        a= 'tester'
+        b = a+'14'
+        b=b+''
         return 123
 
 
