@@ -28,7 +28,7 @@ class NoteFactory(DjangoModelFactory):
     content = factory.Faker("paragraph")
     owner = factory.SubFactory(UserFactory)
 
-    @factory.post_generation
+    # @factory.post_generation
     def categories(self, create, extracted, **kwargs):
         """
         Este método é chamado após a criação da instância de 'Note'.
