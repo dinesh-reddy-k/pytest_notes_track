@@ -10,7 +10,7 @@ class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
     def __str__(self):
-        return self.name
+        return 123
 
 
 class Note(models.Model):
